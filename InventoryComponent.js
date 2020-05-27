@@ -4,9 +4,10 @@ import { Text, View, StyleSheet, FlatList, Button, TouchableHighlight } from 're
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {faSortAmountDownAlt, faSortAmountUpAlt} from '@fortawesome/free-solid-svg-icons';
 
-import Dialog, { DialogFooter, DialogContent, DialogButton } from 'react-native-popup-dialog';
-
+import Dialog, { DialogFooter, DialogContent, DialogButton, DialogTitle } from 'react-native-popup-dialog';
 import RNPickerSelect from 'react-native-picker-select';
+import QRCodeScanner from 'react-native-qrcode-scanner';
+import { RNCamera } from 'react-native-camera';
 
 const config = require('./config.json');
 
@@ -77,12 +78,13 @@ export class InventoryComponent extends Component {
                 <Dialog 
                     visible={this.state.co_visible}
                     onTouchOutside={() => { this.setState({co_visible:false})}}
-                    style={{height: 80,width:'50%'}}
+                    dialogTitle={<DialogTitle title="New Part Order Scan" />}
+                    style={{height: 80, width: 100}}
                     footer={
                         <DialogFooter>
                             <DialogButton
                             text="CANCEL"
-                            onPress={() => {}}
+                            onPress={() => { this.setState({co_visible: false})}}
                             />
                             <DialogButton
                             text="OK"
@@ -90,14 +92,21 @@ export class InventoryComponent extends Component {
                             />
                         </DialogFooter>
                     }>
-                        <RNPickerSelect selectedValue={this.state.selected_checkout_item}
-                                style={{height: 40}}
-                                onValueChange={(iv) => { this.setState({selected_checkout_item: iv}); }}
-                                items={this.state.parts && this.state.parts.length > 0 && this.state.parts.map((val) => {
-                                    return {"label":val.name, "value":val.itemno};
-                                })}
+                        <DialogContent>
+                            <TouchableHighlight>
+                                <Button underlayColor={colors.tealSecondary} title="QR Checkout" onPress={() => {
+                                    this.setState({co_visible: true})
+                                }} />
+                            </TouchableHighlight>
+                            <RNPickerSelect selectedValue={this.state.selected_checkout_item}
+                                    style={{height: 40}}
+                                    onValueChange={(iv) => { this.setState({selected_checkout_item: iv}); }}
+                                    items={this.state.parts && this.state.parts.length > 0 && this.state.parts.map((val) => {
+                                        return {"label":val.name, "value":val.itemno};
+                                    })}
 
-                         />
+                            />
+                         </DialogContent>
 
                 </Dialog>
             </>
