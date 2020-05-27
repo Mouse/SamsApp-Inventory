@@ -1,36 +1,98 @@
-import * as React from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+/**
+ *  * Sample React Native App
+ *  * https://github.com/facebook/react-native
+ *  *
+ *  * @format
+ *  * @flow strict-local
+ *  */
+import React, { Component } from 'react';
+import {
+    StyleSheet,
+    View,
+    Text,
+    FlatList,
+    ScrollView,
+    TouchableHighlight,
+} from 'react-native';
 
-const instructions = Platform.select({
-  ios: `Press Cmd+R to reload,\nCmd+D or shake for dev menu`,
-  android: `Double tap R on your keyboard to reload,\nShake or press menu button for dev menu`,
-});
+import { NativeRouter, Route, Link } from 'react-router-native';
+import InventoryComponent from './InventoryComponent';
+import NonInventoryComponent from './NonInventoryComponent';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.welcome}>Welcome to React Native!</Text>
-      <Text style={styles.instructions}>To get started, edit App.js</Text>
-      <Text style={styles.instructions}>{instructions}</Text>
-    </View>
-  );
+//import colors from './includes';
+
+const NullComponent = () => {
+    return <Text>Click one of the buttons to begin</Text>;
+};
+
+export default class App extends Component {
+    constructor() {
+        super();
+        this.state = {
+            GridListItems: [
+                { key: 'Inventory', page: 'inventory' },
+                { key: 'Non-Inventory', page: 'noninv' },
+                { key: 'Reports', page: 'repo' },
+                { key: 'Checkout History', page: 'history' },
+                { key: 'Members', page: 'members' },
+                { key: 'Support', page: 'support' }
+            ]
+        };
+    }
+
+    render() {
+        return (
+            <NativeRouter>
+                <View>
+                    <Text style={styles.titleText}>FPS - Inventory Control</Text>
+                </View>
+                <View>
+                    <FlatList
+                        data={this.state.GridListItems}
+                        extraData={this.state.GridListItems}
+                        renderItem={({ item }) =>
+                            <TouchableHighlight style={{flex: 1}} >
+                                <Link underlayColor={colors.tealSecondary} style={styles.gridViewContainer} to={`/${item.page}`}><Text>{item.key}</Text></Link>
+                            </TouchableHighlight>
+                        }
+                        numColumns={2}
+                    />
+                </View>
+                <ScrollView style={styles.content}>
+                    <Route exact path="/" component={NullComponent} />
+                    <Route path="/inventory" component={InventoryComponent} />
+                    <Route path="/noninv" component={NonInventoryComponent} />
+                </ScrollView>
+            </NativeRouter>
+        );
+    }
 }
 
+const colors = {
+    tealPrimary: '#6BD4CF',
+    tealSecondary: '#7BE4DF',
+    gray: '#808080',
+    darkgray: '#404040'
+};
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
+    gridViewContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: 50,
+        margin: 5,
+        backgroundColor: colors.tealPrimary
+    },
+    titleText: {
+        color: colors.gray,
+        fontSize: 28,
+        fontWeight: 'bold',
+        textAlign: 'center'
+    },
+    content: {
+        borderTopColor: colors.darkgray,
+        borderTopWidth: StyleSheet.hairlineWidth
+    }
 });
+

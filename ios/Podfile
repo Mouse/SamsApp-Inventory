@@ -43,4 +43,8 @@ target 'SamsApp' do
 
   # react-native-cli autolinking
   use_native_modules!
+  pod 'RNCPicker', :path => '../node_modules/@react-native-community/picker'
+
+  pod 'RNScreens', :path => '../node_modules/react-native-screens'
+
 end
