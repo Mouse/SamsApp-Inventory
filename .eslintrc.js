@@ -6,7 +6,8 @@ module.exports = {
 	},
 	'extends': [
 		'eslint:recommended',
-		'plugin:react/recommended'
+		'plugin:react/recommended',
+		'plugin:prettier/recommended'
 	],
 	'globals': {
 		'Atomics': 'readonly',
@@ -14,15 +15,18 @@ module.exports = {
 	},
 	'parserOptions': {
 		'ecmaFeatures': {
-			'jsx': true
+			'jsx': true,
+			'js': true
 		},
 		'ecmaVersion': 11,
 		'sourceType': 'module'
 	},
 	'plugins': [
-		'react'
+		'react',
+		'prettier'
 	],
 	'rules': {
+		'prettier/prettier': 'error',
 		'indent': [
 			'error',
 			'tab'
