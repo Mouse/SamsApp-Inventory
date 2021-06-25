@@ -1,3 +1,7 @@
+/** TODO
+	1.) Delete node modules and lock files
+	2.) react-native-router-flux causing issue?
+**/
 /**
  *  * Sample React Native App
  *  * https://github.com/facebook/react-native
@@ -5,44 +9,199 @@
  *  * @format
  *  * @flow strict-local
  *  */
+
+import 'react-native-gesture-handler';
 import React, { Component } from 'react';
 import {
 	StyleSheet,
 	View,
 	Text,
 	FlatList,
-	ScrollView,
 	TouchableHighlight,
-	Alert,
 } from 'react-native';
 
-import { NativeRouter, Route, Link } from 'react-router-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { useNavigation } from '@react-navigation/native';
+import { navigationRef } from './ThatsTheWayINavigate';
+
+import * as RootNavigation from './ThatsTheWayINavigate';
+
+//import { Router, Scene, Stack, Actions } from 'react-native-router-flux';
 
 import InventoryComponent from './InventoryComponent';
 import NonInventoryComponent from './NonInventoryComponent';
+import ReviewComponent from './ReviewComponent';
+import MembersComponent from './MembersComponent';
+import CheckoutHistoryComponent from './CheckoutHistoryComponent';
+import InventoryOrderComponent from './InventoryOrderComponent';
+import NonInventoryOrderComponent from './NonInventoryOrderComponent';
+import Cart from './Cart';
+import CartComponent from './CartComponent';
 
+const config = require('./DatabaseServer/config.json');
 //import colors from './includes';
 
-const NullComponent = () => {
-	return null;
-};
+import fetch from 'node-fetch';
+import AbortController from 'abort-controller';
+
+if (!globalThis.fetch) {
+	globalThis.fetch = fetch;
+}
+
+const controller = new AbortController();
+const Stack = createStackNavigator();
+//const API = React.createContext();
 
 export default class App extends Component {
-	constructor() {
-		super();
+	constructor(props) {
+		super(props);
 
 		this.state = {
 			GridListItems: [
-				{ key: 'Inventory', page: 'inventory' },
-				{ key: 'Non-Inventory', page: 'noninv' },
-				{ key: 'Reports', page: 'repo' },
-				{ key: 'Checkout History', page: 'history' },
-				{ key: 'Members', page: 'members' },
-				{ key: 'Support', page: 'support' },
+				{ key: 'Inventory', page: 'Inventory' },
+				{ key: 'Non-Inventory', page: 'Noninventory' },
+				{ key: 'Reports', page: 'Repo' },
+				{ key: 'Checkout History', page: 'History' },
+				{ key: 'Members', page: 'Members' },
+				{ key: 'Support', page: 'Support' },
 			],
 			overlay_on: false,
 			camera: null,
+			status_lines: [],
+			user: 0,
+			users: [],
+			cart_icon_showing: false,
+			cart_items: 0,
+			cart_qty: 0,
 		};
+
+		this.statusUpdate.bind(this);
+		this.setUser.bind(this);
+		this.setPage.bind(this);
+	}
+
+	setUser(u) {
+		const { navigation } = this.props;
+		this.setState({ user: u }, () => {
+			RootNavigation.navigate('Choice');
+		});
+		
+	}
+
+	setPage(p) {
+		RootNavigation.navigate(p);
+	}
+
+	showCartIcon = () => {
+		this.setState({ cart_icon_showing: true });
+	};
+
+	hideCartIcon = () => {
+		this.setState({ cart_icon_showing: false });
+	}
+
+	setCartDistinctItemsQty = (n) => {
+		this.setState({ cart_items: n });
+	};
+
+	setCartTotalItemsQty = (n) => {
+		this.setState({ cart_qty: n });
+	};
+
+	getCartDistinctItemsQty = (n) => {
+		return this.state.cart_items;
+	};
+
+	getCartTotalItemsQty = (n) => {
+		return this.state.cart_qty;
+	};
+
+	checkConnectionFetch = async () => {
+		this.statusUpdate(
+			`Attempting to connect to http://${config.dbApi}:${config.apiPort} - fetch`
+		);
+		const timeout = setTimeout(() => {
+			controller.abort();
+		}, 5000);
+
+		return fetch(`http://${config.dbApi}:${config.apiPort}/`, {
+			signal: controller.signal,
+		})
+			.then((response) => {
+				this.statusUpdate('Connected - fetch');
+			})
+			.catch((err) => {
+				if (err.name === 'AbortError') {
+					this.statusUpdate('Timed out - fetch');
+				} else {
+					this.statusUpdate(`Connection error: ${err} - fetch`);
+				}
+			})
+			.finally(() => {
+				clearTimeout(timeout);
+			});
+	};
+
+	checkConnectionXMLRequest = async () => {
+		const xhr = new XMLHttpRequest();
+		const app_obj = this;
+
+		xhr.withCredentials = true;
+		xhr.timeout = 5000;
+
+		return new Promise((resolve, reject) => {
+			xhr.onload = (ev) => {
+				if (xhr.readyState === 4 && xhr.status === 200) {
+					app_obj.statusUpdate('Connected successfully - XMLHttpRequest');
+					resolve(xhr);
+				} else {
+					app_obj.statusUpdate(
+						`Connection failed: ${xhr.status} - ${xhr.response}`
+					);
+					reject(xhr);
+				}
+			};
+
+			xhr.onerror = (pev) => {
+				app_obj.statusUpdate('Connection crit failed: - XMLHttpRequest');
+				reject(xhr);
+			};
+
+			xhr.open(
+				'GET',
+				`http://${config.dbApi}:${config.apiPort}/members`,
+				true
+			);
+			this.statusUpdate(
+				`Attempting to connect to http://${config.dbApi}:${config.apiPort} - XMLHttpRequest`
+			);
+			xhr.send();
+		});
+	};
+
+	async componentDidMount() {
+		//await this.checkConnectionFetch();
+		//await this.checkConnectionXMLRequest(); //reasons
+
+		await fetch(`http://${config.dbApi}:${config.apiPort}/members`)
+			.then((response) => response.json())
+			.then((data) => {
+				this.setState({ users: data });
+			});
+	}
+
+	componentDidUpdate(prevProps, prevState) {
+		// if (this.state.status_lines.length > 3) {
+		// 	this.state.status_lines.shift();
+		// }
+		// if (this.state.users.length !== prevState.users.length) {
+		// 	return true;
+		// }
+	}
+
+	statusUpdate(text) {
+		this.setState({ status_lines: [...this.state.status_lines, text] });
 	}
 
 	showCamera(cam) {
@@ -54,29 +213,9 @@ export default class App extends Component {
 	}
 
 	render() {
+		//DO NOT EVER PUT ANOTHER RETURN HERE. IT DELETES EVERYTHING
 		return (
-			<NativeRouter>
-				<View>
-					<Text style={styles.titleText}>FPS - Inventory Control</Text>
-				</View>
-				<View>
-					<FlatList
-						data={this.state.GridListItems}
-						extraData={this.state.GridListItems}
-						renderItem={({ item }) => (
-							<TouchableHighlight style={{ flex: 1 }}>
-								<Link
-									underlayColor={colors.tealSecondary}
-									style={styles.gridViewContainer}
-									to={`/${item.page}`}
-								>
-									<Text>{item.key}</Text>
-								</Link>
-							</TouchableHighlight>
-						)}
-						numColumns={2}
-					/>
-				</View>
+			<>
 				{this.state.overlay_on && (
 					<View
 						onTouchEnd={(e) => {
@@ -97,30 +236,144 @@ export default class App extends Component {
 						{this.state.camera}
 					</View>
 				)}
-				<ScrollView style={styles.content}>
-					<Route exact path="/" component={NullComponent} />
-					<Route
-						path="/inventory"
-						component={() => (
-							<InventoryComponent
-								showCameraFunction={this.showCamera.bind(this)}
-								hideCameraFunction={this.hideCamera.bind(this)}
-							/>
-						)}
-					/>
-					<Route
-						path="/noninv"
-						component={() => (
-							<NonInventoryComponent
-								showCameraFunction={this.showCamera.bind(this)}
-								hideCameraFunction={this.hideCamera.bind(this)}
-							/>
-						)}
-					/>
-				</ScrollView>
-			</NativeRouter>
+
+				<NavigationContainer ref={ navigationRef }> 
+					<Stack.Navigator initialRouteName="Login" key="root">
+						<Stack.Screen name="Login" options={{ title: "Login" }} initial>
+							{props => 
+								<View>
+									<FlatList
+										data={this.state.users}
+										extraData={this.state.users}
+										renderItem={({ item }) => 
+											(
+												<TouchableHighlight underlayColor={colors.tealPrimary} onPress={this.setUser.bind(this,item.id)}>
+													<View style={{flex: 1, width: '100%', alignItems: 'center', paddingVertical: 15, marginBottom: 5, backgroundColor: colors.tealPrimary}}>
+														<Text style={{fontSize: 20}}>{item.name}</Text>
+													</View>
+												</TouchableHighlight>
+											)}
+										numColumns={1}
+									/>
+								</View>
+							}
+						</Stack.Screen>
+						
+						<Stack.Screen name="Choice" options={{ title: "FPS Inventory System" }}>
+							{ props => 
+								<View>
+									<FlatList
+										data={this.state.GridListItems}
+										extraData={this.state.GridListItems}
+										renderItem={({ item }) => (
+											<TouchableHighlight underlayColor={colors.tealPrimary} style={{ flex: 1 }} onPress={this.setPage.bind(this,item.page)}>
+												<View style={{flex: 1, width: '98%', alignItems: 'center', paddingVertical: 15, marginBottom: 5, backgroundColor: colors.tealPrimary}}>
+													<Text style={{fontSize: 15}}>{item.key}</Text>
+												</View>
+											</TouchableHighlight>
+										)}
+										numColumns={2}
+									/>
+								</View>
+							}
+						</Stack.Screen>
+
+						<Stack.Screen name="Inventory" options={{ title: "Inventory" }}>
+							{ props => 
+								<InventoryComponent
+									member={this.state.user}
+									showCameraFunction={this.showCamera.bind(this)}
+									hideCameraFunction={this.hideCamera.bind(this)}
+								/>
+							}
+						</Stack.Screen> 
+						<Stack.Screen name="Noninventory" options={{ title: "Non-Inventory" }}>
+							{ props => 
+								<NonInventoryComponent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+									member={this.state.user}
+									showCameraFunction={this.showCamera.bind(this)}
+									hideCameraFunction={this.hideCamera.bind(this)} 
+								/>
+							}
+						</Stack.Screen>
+						<Stack.Screen name="Repo" options={{ title: "Reports" }} component={ReviewComponent} />
+						<Stack.Screen name="History" options={{ title: "Order History" }}>
+							{ props => 
+								<CheckoutHistoryComponent
+									member={this.state.user}	
+								/>
+							}
+						</Stack.Screen> 
+						<Stack.Screen name="Members" options={{ title: "Members" }} component={MembersComponent} />
+						<Stack.Screen name="Support" options={{ title: "Support" }}>
+							{ props => 
+								<View>
+									<Text>Please contact Sam Rodriguez for assistance</Text>
+								</View>
+							}
+						</Stack.Screen>
+						<Stack.Screen name="Inventory_order" options={{ title: "Inventory Order" }}>
+							{ props => 
+								<InventoryOrderComponent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+									member={this.state.user}
+									showCameraFunction={this.showCamera.bind(this)}
+									hideCameraFunction={this.hideCamera.bind(this)}
+									showCartIconFunction={this.showCartIcon.bind(this)}
+									setCartItemsFunction={this.setCartDistinctItemsQty.bind(this)}
+									setCartQtyFunction={this.setCartTotalItemsQty.bind(this)}
+
+								/>
+							}
+						</Stack.Screen>
+						<Stack.Screen name="NonInventory_order" options={{ title: "Non-Inventory Order" }}>
+							{ props => 
+								<NonInventoryOrderComponent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+									member={this.state.user}
+									showCameraFunction={this.showCamera.bind(this)}
+									hideCameraFunction={this.hideCamera.bind(this)}
+									showCartIconFunction={this.showCartIcon.bind(this)}
+									setCartItemsFunction={this.setCartDistinctItemsQty.bind(this)}
+									setCartQtyFunction={this.setCartTotalItemsQty.bind(this)}
+
+								/>
+							}
+						</Stack.Screen>
+							
+						<Stack.Screen name="Cart" options={{ title: "Cart" }}>
+							{ props =>
+								<CartComponent
+									hideCart={this.hideCartIcon.bind(this)}
+									showCart={this.showCartIcon.bind(this)}
+									getCartDistinctItemsQty={this.getCartDistinctItemsQty.bind(this)}
+									getCartTotalItemsQty={this.getCartTotalItemsQty.bind(this)}
+									setCartDistinctItemsQty={this.setCartDistinctItemsQty.bind(this)}
+									setCartTotalItemsQty={this.setCartTotalItemsQty.bind(this)}
+								/>
+							}
+						</Stack.Screen> 
+
+					</Stack.Navigator>
+				</NavigationContainer>
+				{ this.state.cart_icon_showing > 0 &&
+					<TouchableHighlight style={{
+							backgroundColor: '#f00',
+							position: 'absolute',
+							bottom: 0,
+							right: 0,
+							paddingVertical: 20,
+							paddingHorizontal: 20,						
+							borderRadius: 20,
+							zIndex: 999
+						}}
+						onPress={this.setPage.bind(this,'Cart')}
+						underlayColor={colors.gray}>
+						<Text style={{color: 'black'}}>{this.state.cart_items} - ({this.state.cart_qty})</Text>
+					</TouchableHighlight>
+				}
+			</>
 		);
-	}
+
+ 	}
 }
 
 const colors = {

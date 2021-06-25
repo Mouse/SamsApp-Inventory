@@ -1,69 +1,203 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const mysql = require('mysql');
-const config = require('../config.json');
+const sql = require('mysql');
+const config = require('./config.json');
 
 const app = express();
+app.use(bodyParser.json());
 
-app.get('/inventoryquantity', function (req, res) {
-	const connection = mysql.createConnection({
-		host: config.dbServer,
-		user: config.dbUser,
-		password: config.dbPass,
-		database: config.dbSchema,
-		port: 3306,
-		timeout: 1000,
+const port = 3306;
+
+const pool = new sql.createPool({
+	connectionLimit: 10,
+	host: config.dbServer,
+	user: config.dbUser,
+	password: config.dbPass,
+	database: config.dbSchema
+});
+
+let log_data = []
+
+if (typeof console  != "undefined") 
+    if (typeof console.log != 'undefined')
+        console.olog = console.log;
+    else
+        console.olog = function() {};
+
+console.log = function(message) {
+    console.olog(message);
+    log_data.push(`<h3>${new Date().toLocaleString()}</h3><p>${message}</p>`)
+};
+
+console.log('Log Setup');
+
+app.get('/log', function(req,res) {
+	str = log_data.join('<hr />').replace(/[\n]/g,"<br />")
+	res.send(`<h1>Error/Activity Log</h1><hr>${str}`)
+});
+app.get('/clearlog', function(req,res) {
+	log_data = []
+	res.redirect('/log');
+});
+
+app.get('/inventoryreport', function (req, res) {
+	console.log(`Getting inventory report`);
+
+	pool.getConnection((err, connection) => {
+		connection.query('SELECT * FROM inventory', (error,results,fields) => {
+			if (error !== null)
+					console.log(error);
+			const data = results.map((val) => Object.values(val));
+			data.unshift(['Itemno', 'Name', 'Quantity']);
+			const retval = data
+				.map((v) => `${v[0]},"${v[1].replace(/\"/g, '\'')}",${v[2]}\r\n`)
+				.join('');
+			res.send(retval);
+		});
 	});
-	if (req.query.itemno && req.query.qty) {
-		connection.query(
-			`UPDATE inventory SET qty = qty - ${req.query.qty} WHERE itemno = '${req.query.itemno}'`,
-			function (error, results, fields) {
-				if (error) console.log(error.message);
-				else res.send(results);
-			}
-		);
+});
+
+app.get('/noninventoryreport', function (req, res) {
+	console.log(`Getting noninventory report`);
+	pool.getConnection((err, connection) => {
+		connection.query('SELECT * FROM noninventory', (error,results,fields) => {
+			if (error !== null)
+					console.log(error);
+			const data = results.map((val) => Object.values(val));
+			data.unshift(['Itemno', 'Name', 'Quantity']);
+			const retval = data
+				.map((v) => `${v[0]},"${v[1].replace(/\"/g, '\'')}",${v[2]}\r\n`)
+				.join('');
+			res.send(retval);
+		});
+	});
+});
+
+app.get('/checkoutreport', function (req, res) {	
+	console.log(`Getting checkout report`);
+	if (typeof req.query.all !== 'undefined') {
+		pool.getConnection((err, connection) => {
+			connection.query('SELECT u.id AS member_id, name, orderid, itemno, qty, date_created, notes, type FROM checkouts JOIN fps_users u ON u.id = member_id', (error,results,fields) => {
+				if (error !== null)
+					console.log(error);
+				let data = results.map((val) => Object.values(val));
+				data.unshift(['MemberID', 'Name', 'OrderID', 'ItemNo', 'Quantity', 'DateCreated', 'Notes', 'Type']);
+				const retval = data
+					.map((v) => `${v[0]},${v[1]},${v[2]},"${v[3].replace(/\"/g, '\'')}",${v[4]},${v[5]},${v[6]},${v[7]}\r\n`)
+					.join('');
+
+				res.send({
+					checkouts: results,
+					checkout_report_string: retval
+				});
+			});
+		});
+	} else if (typeof req.query.orderid !== 'undefined') {
+		pool.getConnection((err, connection) => {
+			connection.query(`SELECT u.id AS member_id, name, orderid, itemno, qty, date_created, notes, type FROM checkouts JOIN fps_users u ON u.id = member_id WHERE orderid=${req.query.orderid}`, (error,results,fields) => {
+				if (error !== null)
+					console.log(error);
+				let data = results.map((val) => Object.values(val));
+				data.unshift(['MemberID', 'Name', 'OrderID', 'ItemNo', 'Quantity', 'DateCreated', 'Notes', 'Type']);
+				const retval = data
+					.map((v) => `${v[0]},${v[1]},${v[2]},"${v[3].replace(/\"/g, '\'')}",${v[4]},${v[5]},${v[6]},${v[7]}\r\n`)
+					.join('');
+
+				res.send({
+					checkouts: results,
+					checkout_report_string: retval
+				});
+			});
+		});
 	} else {
-		connection.query('SELECT * FROM inventory', function (
-			error,
-			results,
-			fields
-		) {
-			if (error) console.log(error.message);
-			else res.send(results);
+		pool.getConnection((err, connection) => {
+			connection.query(`SELECT u.id AS member_id, name, orderid, date_created, notes, type FROM checkouts JOIN fps_users u ON u.id = member_id GROUP BY orderid`, (error,results,fields) => {
+				if (error !== null)
+					console.log(error);
+				let data = results.map((val) => Object.values(val));
+				data.unshift(['MemberID', 'Name', 'OrderID', 'DateCreated', 'Notes', 'Type']);
+				const retval = data
+					.map((v) => `${v[0]},${v[1]},${v[2]},${v[3]},${v[4]},${v[5]}\r\n`)
+					.join('');
+
+				res.send({
+					checkouts: results,
+					checkout_report_string: retval
+				});
+			});
 		});
 	}
-	connection.end();
+});
+
+app.get('/members', function (req, res) {	
+	console.log(`Collecting 'fps_users.members' data`);
+
+	pool.getConnection((err, connection) => {
+		connection.query('SELECT * FROM fps_users', (error,results,fields) => {
+			res.send(results);
+		});
+	});
+});
+
+app.get('/inventoryquantity', function (req, res) {
+	console.log(`Grabbing FPS Inventory Quantity`);
+		
+	pool.getConnection((err, connection) => {
+		connection.query('SELECT * FROM inventory', (error,results,fields) => {
+			if (error !== null)
+				console.log(error);
+			res.send(results);
+		});
+	});
 });
 
 app.get('/noninventoryquantity', function (req, res) {
-	const connection = mysql.createConnection({
-		host: config.dbServer,
-		user: config.dbUser,
-		password: config.dbPass,
-		database: config.dbSchema,
-		port: 3306,
-		timeout: 1000,
-	});
-	if (req.query.itemno && req.query.qty) {
-		connection.query(
-			`UPDATE noninventory SET qty = qty - ${req.query.qty} WHERE itemno = '${req.query.itemno}'`
-		);
-	} else {
-		connection.query('SELECT * FROM noninventory', function (
-			error,
-			results,
-			fields
-		) {
-			if (error) console.log(error.message);
-			else res.send(results);
+	console.log(`Grabbing FPS Non-Inventory Quantity`);
+
+	pool.getConnection((err, connection) => {
+		connection.query('SELECT * FROM noninventory', (error,results,fields) => {
+			if (error !== null)
+				console.log(error);
+				
+			res.send(results);
 		});
-	}
-	connection.end();
+	});
 });
+
+app.get('/version', function (req, res) {
+	res.send("DB API Version 1.1.3");
+});
+
+app.post('/order', bodyParser.json(), function (req, res) {
+	console.log(`Creating checkout order`);
+
+	const items = req.body.items;
+	let inserted = 0;
+	let sql_query = "";
+	let max_orderid = 1;
+	pool.getConnection((err, connection) => {
+		connection.query('SELECT MAX(orderid) as MOID FROM checkouts', (error,results,fields) => {
+			if (error !== null)
+				console.log(error);
+			if (results !== null && results[0].MOID !== null)
+				max_orderid = results[0].MOID+1;
+			let stmt = `INSERT INTO checkouts(orderid,member_id,itemno,qty,type,notes) VALUES ? `;
+			let rows = items.map(item => {
+				return [max_orderid,item.member_id,item.itemno,item.cart_qty,item.type === 'INVENTORY' ? 'INVENTORY' : 'NONINVENTORY',item.notes];
+			});
+
+			connection.query(stmt, [rows], (error2,results2,fields2) => {
+				if (error2 !== null)
+					console.log(error);
+				res.send(`${results2.affectedRows}/${rows.length}`);
+			});
+		});
+	});
+});
+
+
 
 app.listen(config.apiPort, () => {
 	console.log(`API Set up for database use with details\n==============\nServer: ${config.dbServer},\n
-    User: ${config.dbUser},\n
-    Pass: ${config.dbPass},\n
     Schema: ${config.dbSchema}`);
 });

@@ -1,5 +1,6 @@
+/* eslint-disable react/prop-types */
 /* global fetch:false */
-import React, { Component, createRef } from 'react';
+import React, { Component } from 'react';
 import {
 	Text,
 	View,
@@ -7,7 +8,6 @@ import {
 	FlatList,
 	Button,
 	TouchableHighlight,
-	TextInput,
 	Alert,
 	Dimensions,
 } from 'react-native';
@@ -16,25 +16,11 @@ import {
 	faSortAmountDownAlt,
 	faSortAmountUpAlt,
 } from '@fortawesome/free-solid-svg-icons';
-import { withRouter } from 'react-router-native';
+import * as RootNavigation from './ThatsTheWayINavigate';
+//import { withRouter, Link } from 'react-router-native';
 
-import DialogManager, {
-	ScaleAnimation,
-	DialogContent,
-} from 'react-native-dialog-component';
-//import Dialog, { DialogFooter, DialogContent, DialogButton, DialogTitle } from 'react-native-popup-dialog';
+const config = require('./DatabaseServer/config.json');
 
-import RNPickerSelect from 'react-native-picker-select';
-import QRCodeScanner from 'react-native-qrcode-scanner';
-import { RNCamera } from 'react-native-camera';
-
-import Icon from 'react-native-vector-icons/Ionicons';
-import * as Animatable from 'react-native-animatable';
-import QtySlider from './QtySlider';
-
-const config = require('./config.json');
-
-const SCREEN_HEIGHT = Dimensions.get('window').height;
 const SCREEN_WIDTH = Dimensions.get('window').width;
 
 export class InventoryComponent extends Component {
@@ -54,142 +40,40 @@ export class InventoryComponent extends Component {
 			citemno: null,
 			cqty: null,
 			camera_on: false,
+			selected_checkout_item: ''
 		};
 	}
 
 	componentDidMount() {
-		fetch(`http://${config.dbServer}:${config.apiPort}/inventoryquantity`)
+		fetch(`http://${config.dbApi}:${config.apiPort}/inventoryquantity`)
 			.then((response) => response.json())
 			.then((data) => {
 				this.setState({ parts: data });
 			});
 	}
 
-	makeSlideOutTranslation(translationType, fromValue) {
-		return {
-			from: {
-				[translationType]: SCREEN_WIDTH * -0.12,
-			},
-			to: {
-				[translationType]: fromValue,
-			},
-		};
-	}
-
 	render() {
-		const HistoryView = withRouter(({ history }) => (
-			<View>
+		return (
+			// <API.Consumer>
+			<View>				
 				<View>
-					<Text style={styles.titleText}>Inventory</Text>
-				</View>
-				<View style={styles.header}>
 					<FontAwesomeIcon
 						size={32}
 						icon={
 							this.state.sort === 0 ? faSortAmountDownAlt : faSortAmountUpAlt
 						}
+						style={{alignSelf: 'center'}}
 					/>
-					<Text>SORT</Text>
+					<Text style={{alignSelf: 'center'}}>SORT</Text>
 				</View>
-				<View style={styles.header}>
-					<TouchableHighlight style={{ flex: 1, zIndex: 0 }}>
-						<Button
-							style={styles.gridViewContainer}
-							underlayColor={colors.tealSecondary}
-							title="New Checkout"
-							onPress={() => {
-								DialogManager.show(
-									{
-										title: 'New Part Order Scan',
-										titleAlign: 'center',
-										animationDuration: 200,
-										ScaleAnimation: new ScaleAnimation(),
-										children: (
-											<DialogContent>
-												<TouchableHighlight>
-													<Button
-														underlayColor={colors.tealSecondary}
-														title="QR Checkout"
-														onPress={() => {
-															const camera = (
-																<QRCodeScanner
-																	permissionDialogTitle={
-																		'Need Camera Permission'
-																	}
-																	permissionDialogMessage={
-																		'Please allow us permission to use the camera to continue'
-																	}
-																	onRead={(ev) => {
-																		if (
-																			this.state.parts
-																				.map((val) => val.itemno)
-																				.includes(ev.data)
-																		) {
-																			const item = this.state.parts.find(
-																				(val) => val.itemno === ev.data
-																			);
-
-																			if (parseInt(item.qty) === 0) {
-																				Alert.alert(
-																					'Error!',
-																					'Selected Item is Out of Stock'
-																				);
-																			} else {
-																				this.props.hideCameraFunction();
-																				DialogManager.show({
-																					title: 'Quantity of ' + item.itemno,
-																					titleAlign: 'center',
-																					animationDuration: 200,
-																					ScaleAnimation: new ScaleAnimation(),
-																					children: (
-																						<DialogContent>
-																							<QtySlider item={item} />
-																						</DialogContent>
-																					),
-																				});
-																			}
-																		}
-																	}}
-																/>
-															);
-
-															window.setTimeout(() => {
-																this.props.showCameraFunction(camera);
-																try {
-																	DialogManager.dismiss();
-																} catch (err) {}
-																history.push('/');
-															}, 500);
-														}}
-													/>
-												</TouchableHighlight>
-												<TextInput></TextInput>
-												<RNPickerSelect
-													selectedValue={this.state.selected_checkout_item}
-													style={{ height: 40 }}
-													onValueChange={(iv) => {
-														this.setState({ selected_checkout_item: iv });
-													}}
-													items={
-														this.state.parts &&
-														this.state.parts.length > 0 &&
-														this.state.parts.map((val) => {
-															return { label: val.name, value: val.itemno };
-														})
-													}
-												/>
-											</DialogContent>
-										),
-									},
-									() => {
-										console.log('callback - show');
-									}
-								);
-							}}
-						/>
+				<View>
+					<TouchableHighlight underlayColor={colors.tealPrimary} onPress={() => { RootNavigation.navigate('Inventory_order') }}>
+						<View style={{width: '100%', alignItems: 'center', paddingVertical: 20, backgroundColor: colors.tealPrimary}}>
+							<Text style={{fontSize: 20, alignSelf: 'center'}}>New Checkout</Text>
+						</View>
 					</TouchableHighlight>
 				</View>
-				<View style={styles.content}>
+				<View style={[styles.content, {marginTop: 50}]}>
 					<View style={[styles.col]}>
 						<Text style={styles.headerText}>Items</Text>
 					</View>
@@ -197,12 +81,11 @@ export class InventoryComponent extends Component {
 						<Text style={styles.headerText}>Quantity</Text>
 					</View>
 				</View>
-				<View style={styles.content}>
+				<View style={{marginTop: 20}}>
 					<FlatList
 						data={this.state.parts}
 						extraData={this.state.parts}
 						numColumns={2}
-						style={styles.inventoryList}
 						columnWrapperStyle={styles.col}
 						keyExtractor={(item) => item.itemno}
 						renderItem={({ item }) => (
@@ -220,9 +103,8 @@ export class InventoryComponent extends Component {
 					/>
 				</View>
 			</View>
-		));
-
-		return <HistoryView />;
+			// </API.Consumer>
+		);
 	}
 }
 
@@ -231,66 +113,6 @@ const colors = {
 	tealSecondary: '#7BE4DF',
 	gray: '#808080',
 	darkgray: '#404040',
-};
-
-const overlayColor = 'rgba(0,0,0,0.5)'; // this gives us a black color with a 50% transparency
-
-const rectDimensions = SCREEN_WIDTH * 0.65; // this is equivalent to 255 from a 393 device width
-const rectBorderWidth = SCREEN_WIDTH * 0.005; // this is equivalent to 2 from a 393 device width
-const rectBorderColor = 'red';
-
-const scanBarWidth = SCREEN_WIDTH * 0.46; // this is equivalent to 180 from a 393 device width
-const scanBarHeight = SCREEN_WIDTH * 0.0025; //this is equivalent to 1 from a 393 device width
-const scanBarColor = '#22ff00';
-
-const iconScanColor = 'blue';
-
-const qr_styles = {
-	rectangleContainer: {
-		flex: 1,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: 'transparent',
-	},
-
-	rectangle: {
-		height: rectDimensions,
-		width: rectDimensions,
-		borderWidth: rectBorderWidth,
-		borderColor: rectBorderColor,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: 'transparent',
-	},
-
-	topOverlay: {
-		flex: 1,
-		height: SCREEN_WIDTH,
-		width: SCREEN_WIDTH,
-		backgroundColor: overlayColor,
-		justifyContent: 'center',
-		alignItems: 'center',
-	},
-
-	bottomOverlay: {
-		flex: 1,
-		height: SCREEN_WIDTH,
-		width: SCREEN_WIDTH,
-		backgroundColor: overlayColor,
-		paddingBottom: SCREEN_WIDTH * 0.25,
-	},
-
-	leftAndRightOverlay: {
-		height: SCREEN_WIDTH * 0.65,
-		width: SCREEN_WIDTH,
-		backgroundColor: overlayColor,
-	},
-
-	scanBar: {
-		width: scanBarWidth,
-		height: scanBarHeight,
-		backgroundColor: scanBarColor,
-	},
 };
 
 const styles = StyleSheet.create({
@@ -337,9 +159,9 @@ const styles = StyleSheet.create({
 		textAlign: 'center',
 		borderBottomWidth: 4,
 		borderBottomColor: colors.darkgray,
-		fontSize: 24,
+		fontSize: 16,
 		marginBottom: 10,
-		marginTop: 10,
+		marginTop: 30,
 	},
 	titleText: {
 		fontSize: 16,
@@ -369,15 +191,15 @@ const styles = StyleSheet.create({
 		flex: 1,
 		flexDirection: 'row',
 		justifyContent: 'center',
-		alignItems: 'center',
-		alignSelf: 'stretch',
+		alignItems: 'center'
 	},
 	button: {
-		padding: 16,
+		paddingVertical: 20,
+		alignItems: 'center',
 		backgroundColor: colors.tealPrimary,
-		flex: 1,
-		marginBottom: 40,
+		flex: 1
 	},
 });
 
 export default InventoryComponent;
+

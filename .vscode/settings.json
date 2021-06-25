@@ -1,7 +1,17 @@
 {
-  "java.configuration.updateBuildConfiguration": "automatic",
-  "eslint.enable": false,
-  "editor.codeActionsOnSave": {
-    "source.fixAll": true
-  }
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default"
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "AIU_Local",
+            "database": "aiu",
+            "username": "root",
+            "password": "pass"
+        }
+    ]
 }

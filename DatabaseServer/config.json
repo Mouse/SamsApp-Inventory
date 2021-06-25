@@ -1,0 +1,8 @@
+{
+    "dbApi": "inventory-app.fpsys.com",
+    "dbServer": "localhost",
+    "dbSchema": "FPS_Inventory",
+    "dbUser": "node_admin",
+    "dbPass": "Abc1@3!!",
+    "apiPort": 3040
+}
