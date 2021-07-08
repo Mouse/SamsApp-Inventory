@@ -44,36 +44,46 @@ app.get('/inventoryreport', function (req, res) {
 	console.log(`Getting inventory report`);
 
 	pool.getConnection((err, connection) => {
-		connection.query('SELECT * FROM inventory', (error,results,fields) => {
-			if (error !== null)
-					console.log(error);
-			const data = results.map((val) => Object.values(val));
-			data.unshift(['Itemno', 'Name', 'Quantity']);
-			const retval = data
-				.map((v) => `${v[0]},"${v[1].replace(/\"/g, '\'')}",${v[2]}\r\n`)
-				.join('');
-			res.send(retval);
-		});
+		if (err != null) {
+			console.log(err);
+		} else {
+			connection.query('SELECT * FROM inventory', (error,results,fields) => {
+				if (error !== null)
+						console.log(error);
+				const data = results.map((val) => Object.values(val));
+				data.unshift(['Itemno', 'Name', 'Quantity']);
+				const retval = data
+					.map((v) => `${v[0]},"${v[1].replace(/\"/g, '\'')}",${v[2]}\r\n`)
+					.join('');
+				res.send(retval);
+			});
+		}
+		connection.release();
 	});
 });
 
 app.get('/noninventoryreport', function (req, res) {
 	console.log(`Getting noninventory report`);
 	pool.getConnection((err, connection) => {
-		connection.query('SELECT * FROM noninventory', (error,results,fields) => {
-			if (error !== null)
-					console.log(error);
-			const data = results.map((val) => Object.values(val));
-			data.unshift(['Itemno', 'Name', 'Quantity']);
-			const retval = data
-				.map((v) => `${v[0]},"${v[1].replace(/\"/g, '\'')}",${v[2]}\r\n`)
-				.join('');
-			res.send(retval);
-		});
+		if (err != null) {
+			console.log(err);
+		} else {
+			connection.query('SELECT * FROM noninventory', (error,results,fields) => {
+				if (error !== null)
+						console.log(error);
+				const data = results.map((val) => Object.values(val));
+				data.unshift(['Itemno', 'Name', 'Quantity']);
+				const retval = data
+					.map((v) => `${v[0]},"${v[1].replace(/\"/g, '\'')}",${v[2]}\r\n`)
+					.join('');
+				res.send(retval);
+			});
+		}
+		connection.release();
 	});
 });
 
-app.get('/checkoutreport', function (req, res) {	
+app.get('/checkoutreport', function (req, res) {
 	console.log(`Getting checkout report`);
 	if (typeof req.query.all !== 'undefined') {
 		pool.getConnection((err, connection) => {
@@ -90,6 +100,7 @@ app.get('/checkoutreport', function (req, res) {
 					checkouts: results,
 					checkout_report_string: retval
 				});
+				connection.release();
 			});
 		});
 	} else if (typeof req.query.orderid !== 'undefined') {
@@ -107,6 +118,7 @@ app.get('/checkoutreport', function (req, res) {
 					checkouts: results,
 					checkout_report_string: retval
 				});
+				connection.release();
 			});
 		});
 	} else {
@@ -124,78 +136,93 @@ app.get('/checkoutreport', function (req, res) {
 					checkouts: results,
 					checkout_report_string: retval
 				});
+				connection.release();
 			});
 		});
 	}
 });
 
 app.get('/members', function (req, res) {	
-	console.log(`Collecting 'fps_users.members' data`);
-
 	pool.getConnection((err, connection) => {
-		connection.query('SELECT * FROM fps_users', (error,results,fields) => {
-			res.send(results);
-		});
+		if (err !== null) {
+			console.log(err);
+		} else {
+			console.log('Grabbing FPS Members');
+			connection.query('SELECT * FROM fps_users', (error,results,fields) => {
+				res.send(results);
+			});
+		}
+		connection.release();
 	});
 });
 
 app.get('/inventoryquantity', function (req, res) {
-	console.log(`Grabbing FPS Inventory Quantity`);
-		
 	pool.getConnection((err, connection) => {
-		connection.query('SELECT * FROM inventory', (error,results,fields) => {
-			if (error !== null)
-				console.log(error);
-			res.send(results);
-		});
+		if (err !== null) {
+			console.log(err);
+		} else {
+			console.log(`Grabbing FPS Inventory Quantity`);
+			connection.query('SELECT * FROM inventory', (error,results,fields) => {
+				if (error !== null)
+					console.log(error);
+				res.send(results);
+			});
+		}
+		connection.release();
 	});
 });
 
 app.get('/noninventoryquantity', function (req, res) {
-	console.log(`Grabbing FPS Non-Inventory Quantity`);
-
 	pool.getConnection((err, connection) => {
-		connection.query('SELECT * FROM noninventory', (error,results,fields) => {
-			if (error !== null)
-				console.log(error);
-				
-			res.send(results);
-		});
+		if (err !== null) {
+			console.log(err);
+		} else {
+			console.log(`Grabbing FPS Non-Inventory Quantity`);
+			connection.query('SELECT * FROM noninventory', (error,results,fields) => {
+				if (error !== null)
+					console.log(error);
+					
+				res.send(results);
+			});
+		}
+		connection.release();
 	});
 });
 
 app.get('/version', function (req, res) {
-	res.send("DB API Version 1.1.3");
+	res.send("DB API Version 1.1.4");
 });
 
 app.post('/order', bodyParser.json(), function (req, res) {
-	console.log(`Creating checkout order`);
-
 	const items = req.body.items;
 	let inserted = 0;
 	let sql_query = "";
 	let max_orderid = 1;
 	pool.getConnection((err, connection) => {
-		connection.query('SELECT MAX(orderid) as MOID FROM checkouts', (error,results,fields) => {
-			if (error !== null)
-				console.log(error);
-			if (results !== null && results[0].MOID !== null)
-				max_orderid = results[0].MOID+1;
-			let stmt = `INSERT INTO checkouts(orderid,member_id,itemno,qty,type,notes) VALUES ? `;
-			let rows = items.map(item => {
-				return [max_orderid,item.member_id,item.itemno,item.cart_qty,item.type === 'INVENTORY' ? 'INVENTORY' : 'NONINVENTORY',item.notes];
-			});
-
-			connection.query(stmt, [rows], (error2,results2,fields2) => {
-				if (error2 !== null)
+		if (err !== null) {
+			console.log(err);
+		} else {
+			console.log(`Creating checkout order`);
+			connection.query('SELECT MAX(orderid) as MOID FROM checkouts', (error,results,fields) => {
+				if (error !== null)
 					console.log(error);
-				res.send(`${results2.affectedRows}/${rows.length}`);
+				if (results !== null && results[0].MOID !== null)
+					max_orderid = results[0].MOID+1;
+				let stmt = `INSERT INTO checkouts(orderid,member_id,itemno,qty,type,notes) VALUES ? `;
+				let rows = items.map(item => {
+					return [max_orderid,item.member_id,item.itemno,item.cart_qty,item.type === 'INVENTORY' ? 'INVENTORY' : 'NONINVENTORY',item.notes];
+				});
+
+				connection.query(stmt, [rows], (error2,results2,fields2) => {
+					if (error2 !== null)
+						console.log(error);
+					res.send(`${results2.affectedRows}/${rows.length}`);
+				});
 			});
-		});
+		}
+		connection.release();
 	});
 });
-
-
 
 app.listen(config.apiPort, () => {
 	console.log(`API Set up for database use with details\n==============\nServer: ${config.dbServer},\n

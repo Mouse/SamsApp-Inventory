@@ -38,12 +38,14 @@ import InventoryOrderComponent from './InventoryOrderComponent';
 import NonInventoryOrderComponent from './NonInventoryOrderComponent';
 import Cart from './Cart';
 import CartComponent from './CartComponent';
+import LogComponent from './LogComponent';
 
 const config = require('./DatabaseServer/config.json');
 //import colors from './includes';
 
 import fetch from 'node-fetch';
 import AbortController from 'abort-controller';
+import { ScrollView } from 'react-native-gesture-handler';
 
 if (!globalThis.fetch) {
 	globalThis.fetch = fetch;
@@ -65,6 +67,7 @@ export default class App extends Component {
 				{ key: 'Checkout History', page: 'History' },
 				{ key: 'Members', page: 'Members' },
 				{ key: 'Support', page: 'Support' },
+				{ key: 'Log', page: 'Log'}
 			],
 			overlay_on: false,
 			camera: null,
@@ -123,17 +126,22 @@ export default class App extends Component {
 		);
 		const timeout = setTimeout(() => {
 			controller.abort();
-		}, 5000);
+		}, 3000);
 
-		return fetch(`http://${config.dbApi}:${config.apiPort}/`, {
+		return fetch(`http://${config.dbApi}:${config.apiPort}/members`, {
 			signal: controller.signal,
 		})
-			.then((response) => {
+			.then((response) => response.json())
+			.then((data) => {
 				this.statusUpdate('Connected - fetch');
 			})
 			.catch((err) => {
 				if (err.name === 'AbortError') {
 					this.statusUpdate('Timed out - fetch');
+					const old = config.dbApi;
+					this.statusUpdate(`Old config.dbApi: ${old}`);
+					config.dbApi = config.dbApiLocal;
+					this.statusUpdate(`Changed config.dbAbi from ${old} to ${config.dbApi}`);
 				} else {
 					this.statusUpdate(`Connection error: ${err} - fetch`);
 				}
@@ -143,52 +151,53 @@ export default class App extends Component {
 			});
 	};
 
-	checkConnectionXMLRequest = async () => {
-		const xhr = new XMLHttpRequest();
-		const app_obj = this;
+	// checkConnectionXMLRequest = async () => {
+	// 	const xhr = new XMLHttpRequest();
+	// 	const app_obj = this;
 
-		xhr.withCredentials = true;
-		xhr.timeout = 5000;
+	// 	xhr.withCredentials = true;
+	// 	xhr.timeout = 5000;
 
-		return new Promise((resolve, reject) => {
-			xhr.onload = (ev) => {
-				if (xhr.readyState === 4 && xhr.status === 200) {
-					app_obj.statusUpdate('Connected successfully - XMLHttpRequest');
-					resolve(xhr);
-				} else {
-					app_obj.statusUpdate(
-						`Connection failed: ${xhr.status} - ${xhr.response}`
-					);
-					reject(xhr);
-				}
-			};
+	// 	return new Promise((resolve, reject) => {
+	// 		xhr.onload = (ev) => {
+	// 			if (xhr.readyState === 4 && xhr.status === 200) {
+	// 				app_obj.statusUpdate('Connected successfully - XMLHttpRequest');
+	// 				resolve(xhr);
+	// 			} else {
+	// 				app_obj.statusUpdate(
+	// 					`Connection failed: ${xhr.status} - ${xhr.response}`
+	// 				);
+	// 				reject(xhr);
+	// 			}
+	// 		};
 
-			xhr.onerror = (pev) => {
-				app_obj.statusUpdate('Connection crit failed: - XMLHttpRequest');
-				reject(xhr);
-			};
+	// 		xhr.onerror = (pev) => {
+	// 			app_obj.statusUpdate('Connection crit failed: - XMLHttpRequest');
+	// 			reject(xhr);
+	// 		};
 
-			xhr.open(
-				'GET',
-				`http://${config.dbApi}:${config.apiPort}/members`,
-				true
-			);
-			this.statusUpdate(
-				`Attempting to connect to http://${config.dbApi}:${config.apiPort} - XMLHttpRequest`
-			);
-			xhr.send();
-		});
-	};
+	// 		xhr.open(
+	// 			'GET',
+	// 			`http://${config.dbApi}:${config.apiPort}/members`,
+	// 			true
+	// 		);
+	// 		this.statusUpdate(
+	// 			`Attempting to connect to http://${config.dbApi}:${config.apiPort} - XMLHttpRequest`
+	// 		);
+	// 		xhr.send();
+	// 	});
+	// };
 
-	async componentDidMount() {
-		//await this.checkConnectionFetch();
-		//await this.checkConnectionXMLRequest(); //reasons
-
-		await fetch(`http://${config.dbApi}:${config.apiPort}/members`)
+	componentDidMount() {
+		this.checkConnectionFetch().then(() => {
+			fetch(`http://${config.dbApi}:${config.apiPort}/members`)
 			.then((response) => response.json())
 			.then((data) => {
 				this.setState({ users: data });
+				this.statusUpdate(`Connecting with ${config.dbApi}:${config.apiPort}`);
 			});
+		});
+		//await this.checkConnectionXMLRequest(); //reasons6		
 	}
 
 	componentDidUpdate(prevProps, prevState) {
@@ -201,6 +210,7 @@ export default class App extends Component {
 	}
 
 	statusUpdate(text) {
+		console.log(text);
 		this.setState({ status_lines: [...this.state.status_lines, text] });
 	}
 
@@ -289,7 +299,7 @@ export default class App extends Component {
 						</Stack.Screen> 
 						<Stack.Screen name="Noninventory" options={{ title: "Non-Inventory" }}>
 							{ props => 
-								<NonInventoryComponent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+								<NonInventoryComponent
 									member={this.state.user}
 									showCameraFunction={this.showCamera.bind(this)}
 									hideCameraFunction={this.hideCamera.bind(this)} 
@@ -314,7 +324,7 @@ export default class App extends Component {
 						</Stack.Screen>
 						<Stack.Screen name="Inventory_order" options={{ title: "Inventory Order" }}>
 							{ props => 
-								<InventoryOrderComponent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+								<InventoryOrderComponent
 									member={this.state.user}
 									showCameraFunction={this.showCamera.bind(this)}
 									hideCameraFunction={this.hideCamera.bind(this)}
@@ -327,7 +337,7 @@ export default class App extends Component {
 						</Stack.Screen>
 						<Stack.Screen name="NonInventory_order" options={{ title: "Non-Inventory Order" }}>
 							{ props => 
-								<NonInventoryOrderComponent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
+								<NonInventoryOrderComponent
 									member={this.state.user}
 									showCameraFunction={this.showCamera.bind(this)}
 									hideCameraFunction={this.hideCamera.bind(this)}
@@ -350,6 +360,14 @@ export default class App extends Component {
 									setCartTotalItemsQty={this.setCartTotalItemsQty.bind(this)}
 								/>
 							}
+						</Stack.Screen>
+
+						<Stack.Screen name="Log" options={{ title: "Log" }}>
+							{ props =>
+								<LogComponent
+									log={this.state.status_lines}
+								/>
+							}	
 						</Stack.Screen> 
 
 					</Stack.Navigator>

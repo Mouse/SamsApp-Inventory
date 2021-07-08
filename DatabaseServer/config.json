@@ -1,5 +1,6 @@
 {
     "dbApi": "inventory-app.fpsys.com",
+    "dbApiLocal": "192.168.1.2",
     "dbServer": "localhost",
     "dbSchema": "FPS_Inventory",
     "dbUser": "node_admin",
