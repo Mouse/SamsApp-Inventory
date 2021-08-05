@@ -246,132 +246,136 @@ export default class App extends Component {
 						{this.state.camera}
 					</View>
 				)}
-
-				<NavigationContainer ref={ navigationRef }> 
-					<Stack.Navigator initialRouteName="Login" key="root">
-						<Stack.Screen name="Login" options={{ title: "Login" }} initial>
-							{props => 
-								<View>
-									<FlatList
-										data={this.state.users}
-										extraData={this.state.users}
-										renderItem={({ item }) => 
-											(
-												<TouchableHighlight underlayColor={colors.tealPrimary} onPress={this.setUser.bind(this,item.id)}>
-													<View style={{flex: 1, width: '100%', alignItems: 'center', paddingVertical: 15, marginBottom: 5, backgroundColor: colors.tealPrimary}}>
-														<Text style={{fontSize: 20}}>{item.name}</Text>
-													</View>
-												</TouchableHighlight>
-											)}
-										numColumns={1}
-									/>
-								</View>
-							}
-						</Stack.Screen>
-						
-						<Stack.Screen name="Choice" options={{ title: "FPS Inventory System" }}>
-							{ props => 
-								<View>
-									<FlatList
-										data={this.state.GridListItems}
-										extraData={this.state.GridListItems}
-										renderItem={({ item }) => (
-											<TouchableHighlight underlayColor={colors.tealPrimary} style={{ flex: 1 }} onPress={this.setPage.bind(this,item.page)}>
-												<View style={{flex: 1, width: '98%', alignItems: 'center', paddingVertical: 15, marginBottom: 5, backgroundColor: colors.tealPrimary}}>
-													<Text style={{fontSize: 15}}>{item.key}</Text>
-												</View>
-											</TouchableHighlight>
-										)}
-										numColumns={2}
-									/>
-								</View>
-							}
-						</Stack.Screen>
-
-						<Stack.Screen name="Inventory" options={{ title: "Inventory" }}>
-							{ props => 
-								<InventoryComponent
-									member={this.state.user}
-									showCameraFunction={this.showCamera.bind(this)}
-									hideCameraFunction={this.hideCamera.bind(this)}
-								/>
-							}
-						</Stack.Screen> 
-						<Stack.Screen name="Noninventory" options={{ title: "Non-Inventory" }}>
-							{ props => 
-								<NonInventoryComponent
-									member={this.state.user}
-									showCameraFunction={this.showCamera.bind(this)}
-									hideCameraFunction={this.hideCamera.bind(this)} 
-								/>
-							}
-						</Stack.Screen>
-						<Stack.Screen name="Repo" options={{ title: "Reports" }} component={ReviewComponent} />
-						<Stack.Screen name="History" options={{ title: "Order History" }}>
-							{ props => 
-								<CheckoutHistoryComponent
-									member={this.state.user}	
-								/>
-							}
-						</Stack.Screen> 
-						<Stack.Screen name="Members" options={{ title: "Members" }} component={MembersComponent} />
-						<Stack.Screen name="Support" options={{ title: "Support" }}>
-							{ props => 
-								<View>
-									<Text>Please contact Sam Rodriguez for assistance</Text>
-								</View>
-							}
-						</Stack.Screen>
-						<Stack.Screen name="Inventory_order" options={{ title: "Inventory Order" }}>
-							{ props => 
-								<InventoryOrderComponent
-									member={this.state.user}
-									showCameraFunction={this.showCamera.bind(this)}
-									hideCameraFunction={this.hideCamera.bind(this)}
-									showCartIconFunction={this.showCartIcon.bind(this)}
-									setCartItemsFunction={this.setCartDistinctItemsQty.bind(this)}
-									setCartQtyFunction={this.setCartTotalItemsQty.bind(this)}
-
-								/>
-							}
-						</Stack.Screen>
-						<Stack.Screen name="NonInventory_order" options={{ title: "Non-Inventory Order" }}>
-							{ props => 
-								<NonInventoryOrderComponent
-									member={this.state.user}
-									showCameraFunction={this.showCamera.bind(this)}
-									hideCameraFunction={this.hideCamera.bind(this)}
-									showCartIconFunction={this.showCartIcon.bind(this)}
-									setCartItemsFunction={this.setCartDistinctItemsQty.bind(this)}
-									setCartQtyFunction={this.setCartTotalItemsQty.bind(this)}
-
-								/>
-							}
-						</Stack.Screen>
+				{!this.state.overlay_on && (
+					<NavigationContainer ref={ navigationRef }> 
+						<Stack.Navigator initialRouteName="Login" key="root">
+							<Stack.Screen name="Login" options={{ title: "Login" }} initial>
+								{props => 
+									<View>
+										<FlatList
+											data={this.state.users}
+											extraData={this.state.users}
+											renderItem={({ item }) => 
+												(
+													<TouchableHighlight underlayColor={colors.tealPrimary} onPress={this.setUser.bind(this,item.id)}>
+														<View style={{flex: 1, width: '100%', alignItems: 'center', paddingVertical: 15, marginBottom: 5, backgroundColor: colors.tealPrimary}}>
+															<Text style={{fontSize: 20}}>{item.name}</Text>
+														</View>
+													</TouchableHighlight>
+												)}
+											numColumns={1}
+										/>
+									</View>
+								}
+							</Stack.Screen>
 							
-						<Stack.Screen name="Cart" options={{ title: "Cart" }}>
-							{ props =>
-								<CartComponent
-									hideCart={this.hideCartIcon.bind(this)}
-									showCart={this.showCartIcon.bind(this)}
-									getCartDistinctItemsQty={this.getCartDistinctItemsQty.bind(this)}
-									getCartTotalItemsQty={this.getCartTotalItemsQty.bind(this)}
-									setCartDistinctItemsQty={this.setCartDistinctItemsQty.bind(this)}
-									setCartTotalItemsQty={this.setCartTotalItemsQty.bind(this)}
-								/>
-							}
-						</Stack.Screen>
+							<Stack.Screen name="Choice" options={{ title: "FPS Inventory System" }}>
+								{ props => 
+									<>
+										<View>
+											<FlatList
+												data={this.state.GridListItems}
+												extraData={this.state.GridListItems}
+												renderItem={({ item }) => (
+													<TouchableHighlight underlayColor={colors.tealPrimary} style={{ flex: 1 }} onPress={this.setPage.bind(this,item.page)}>
+														<View style={{flex: 1, width: '98%', alignItems: 'center', paddingVertical: 15, marginBottom: 5, backgroundColor: colors.tealPrimary}}>
+															<Text style={{fontSize: 15}}>{item.key}</Text>
+														</View>
+													</TouchableHighlight>
+												)}
+												numColumns={2}
+											/>
+										</View>
+										<View style={{alignItems: 'center'}}><Text>Version: 1.0.0</Text></View>
+									</>
+								}
+							</Stack.Screen>
 
-						<Stack.Screen name="Log" options={{ title: "Log" }}>
-							{ props =>
-								<LogComponent
-									log={this.state.status_lines}
-								/>
-							}	
-						</Stack.Screen> 
+							<Stack.Screen name="Inventory" options={{ title: "Inventory" }}>
+								{ props => 
+									<InventoryComponent
+										member={this.state.user}
+										showCameraFunction={this.showCamera.bind(this)}
+										hideCameraFunction={this.hideCamera.bind(this)}
+									/>
+								}
+							</Stack.Screen> 
+							<Stack.Screen name="Noninventory" options={{ title: "Non-Inventory" }}>
+								{ props => 
+									<NonInventoryComponent
+										member={this.state.user}
+										showCameraFunction={this.showCamera.bind(this)}
+										hideCameraFunction={this.hideCamera.bind(this)} 
+									/>
+								}
+							</Stack.Screen>
+							<Stack.Screen name="Repo" options={{ title: "Reports" }} component={ReviewComponent} />
+							<Stack.Screen name="History" options={{ title: "Order History" }}>
+								{ props => 
+									<CheckoutHistoryComponent
+										member={this.state.user}	
+									/>
+								}
+							</Stack.Screen> 
+							<Stack.Screen name="Members" options={{ title: "Members" }} component={MembersComponent} />
+							<Stack.Screen name="Support" options={{ title: "Support" }}>
+								{ props => 
+									<View>
+										<Text>Please contact Sam Rodriguez for assistance</Text>
+									</View>
+								}
+							</Stack.Screen>
+							<Stack.Screen name="Inventory_order" options={{ title: "Inventory Order" }}>
+								{ props => 
+									<InventoryOrderComponent
+										member={this.state.user}
+										showCameraFunction={this.showCamera.bind(this)}
+										hideCameraFunction={this.hideCamera.bind(this)}
+										showCartIconFunction={this.showCartIcon.bind(this)}
+										setCartItemsFunction={this.setCartDistinctItemsQty.bind(this)}
+										setCartQtyFunction={this.setCartTotalItemsQty.bind(this)}
 
-					</Stack.Navigator>
-				</NavigationContainer>
+									/>
+								}
+							</Stack.Screen>
+							<Stack.Screen name="NonInventory_order" options={{ title: "Non-Inventory Order" }}>
+								{ props => 
+									<NonInventoryOrderComponent
+										member={this.state.user}
+										showCameraFunction={this.showCamera.bind(this)}
+										hideCameraFunction={this.hideCamera.bind(this)}
+										showCartIconFunction={this.showCartIcon.bind(this)}
+										setCartItemsFunction={this.setCartDistinctItemsQty.bind(this)}
+										setCartQtyFunction={this.setCartTotalItemsQty.bind(this)}
+
+									/>
+								}
+							</Stack.Screen>
+								
+							<Stack.Screen name="Cart" options={{ title: "Cart" }}>
+								{ props =>
+									<CartComponent
+										hideCart={this.hideCartIcon.bind(this)}
+										showCart={this.showCartIcon.bind(this)}
+										getCartDistinctItemsQty={this.getCartDistinctItemsQty.bind(this)}
+										getCartTotalItemsQty={this.getCartTotalItemsQty.bind(this)}
+										setCartDistinctItemsQty={this.setCartDistinctItemsQty.bind(this)}
+										setCartTotalItemsQty={this.setCartTotalItemsQty.bind(this)}
+									/>
+								}
+							</Stack.Screen>
+
+							<Stack.Screen name="Log" options={{ title: "Log" }}>
+								{ props =>
+									<LogComponent
+										log={this.state.status_lines}
+									/>
+								}	
+							</Stack.Screen> 
+
+						</Stack.Navigator>
+					</NavigationContainer>
+				)}
 				{ this.state.cart_icon_showing > 0 &&
 					<TouchableHighlight style={{
 							backgroundColor: '#f00',

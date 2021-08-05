@@ -216,7 +216,8 @@ app.post('/order', bodyParser.json(), function (req, res) {
 				connection.query(stmt, [rows], (error2,results2,fields2) => {
 					if (error2 !== null)
 						console.log(error);
-					res.send(`${results2.affectedRows}/${rows.length}`);
+					rowsComplete = (results2 && results2.affectedRows) || 0;
+					res.send(`${rowsComplete}/${rows.length}`);
 				});
 			});
 		}

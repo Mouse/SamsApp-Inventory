@@ -61,6 +61,7 @@ export default class InventoryOrderComponent extends Component {
 						underlayColor={colors.tealSecondary}
 						title="QR Checkout"
 						onPress={() => {
+							var inst = this;
 							const camera = (
 								<QRCodeScanner
 									permissionDialogTitle={'Need Camera Permission'}
@@ -69,18 +70,18 @@ export default class InventoryOrderComponent extends Component {
 									}
 									onRead={(ev) => {
 										if (
-											this.state.parts
+											inst.state.parts
 												.map((val) => val.itemno)
 												.includes(ev.data)
 										) {
-											const item = this.state.parts.find(
+											const item = inst.state.parts.find(
 												(val) => val.itemno === ev.data
 											);
 
 											if (parseInt(item.qty) === 0) {
 												Alert.alert('Error!', 'Selected Item is Out of Stock');
 											} else {
-												this.props.hideCameraFunction();
+												inst.props.hideCameraFunction();
 												DialogManager.show({
 													title: 'Quantity of ' + item.itemno,
 													titleAlign: 'center',
@@ -89,11 +90,11 @@ export default class InventoryOrderComponent extends Component {
 													children: (
 														<DialogContent>
 															<QtySlider
-																showCartIconFunction={this.showCartIcon}
-																setCartItemsFunction={this.setCartItems}
-																setCartQtyFunction={this.setCartQty}
+																showCartIconFunction={inst.showCartIcon}
+																setCartItemsFunction={inst.setCartItems}
+																setCartQtyFunction={inst.setCartQty}
 																type="INVENTORY"
-																member={this.props.member}
+																member={inst.props.member}
 																item={item}
 															/>
 														</DialogContent>
@@ -104,11 +105,11 @@ export default class InventoryOrderComponent extends Component {
 									}}
 								/>
 							);
-
+							
 							setTimeout(() => {
-								this.props.showCameraFunction(camera);
+								inst.props.showCameraFunction(camera);
 								try {
-									DialogManager.currentDialog.destroy();
+									DialogManager.dismissAll();
 								} catch (err) {
 									console.log(err);
 								}
