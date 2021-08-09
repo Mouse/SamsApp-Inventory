@@ -1,9 +1,9 @@
 /* eslint-disable react/prop-types */
 import React, { Component } from 'react';
 import Slider from 'react-native-slider';
-import { Text, View, TextInput } from 'react-native';
-import DialogManager, { DialogButton } from 'react-native-dialog-component';
+import { Text, View, TouchableHighlight, Button } from 'react-native';
 import Cart from './Cart';
+import * as RootNavigation from './ThatsTheWayINavigate';
 
 export default class QtySlider extends Component {
 	constructor(props) {
@@ -20,6 +20,7 @@ export default class QtySlider extends Component {
 		this.showCart = props.showCartIconFunction;
 		this.setCartItems = props.setCartItemsFunction;
 		this.setCartQty = props.setCartQtyFunction;
+		this.closeModal = props.closeModalFunction
 		this.addToCart.bind(this);
 	}
 
@@ -35,75 +36,56 @@ export default class QtySlider extends Component {
 		this.showCart();
 		this.setCartItems(Cart.getCartItems().length);
 		this.setCartQty(Cart.getCartItems().reduce((a,c) => a += c.cart_qty, 0));
+		if (this.closeModal)
+			this.closeModal();
+		if (aitem.type === 'INVENTORY')
+			RootNavigation.navigate('Inventory');
+		else
+			RootNavigation.navigate('Noninventory');
 	}
 
 	render() {
 		const item = this.props.item;
 		return (
-			<View>
-				<View>
-					<Slider
-						style={{
-							width: '100%',
-							height: 30,
-						}}
-						value={this.state.qty}
-						step={1}
-						onValueChange={(value) => {
-							this.setState({ qty: value });
-						}}
-						minimumValue={0}
-						maximumValue={Math.max(0,parseInt(item.qty - Cart.getCartItemQty(item)))}
-						minimumTrackTintColor={colors.tealSecondary}
-						maximumTrackTintColor={colors.gray}
-					/>
-					<Text ref={(r) => (this.text_ref = r)}>{this.state.qty}</Text>
-					<DialogButton
-						align="center"
-						text="Add to Cart"
+			<View style={{ marginTop: 50 }}>
+				{this.props.showItemName &&
+					<Text>{this.props.item.itemno} - {this.props.item.name}</Text>	
+				}
+				<Slider
+					style={{
+						width: '100%',
+						height: 30,
+					}}
+					value={this.state.qty}
+					step={1}
+					onValueChange={(value) => {
+						this.setState({ qty: value });
+					}}
+					minimumValue={0}
+					maximumValue={Math.max(0,parseInt(item.qty - Cart.getCartItemQty(item)))}
+					minimumTrackTintColor={colors.tealSecondary}
+					maximumTrackTintColor={colors.gray}
+				/>
+				<Text>{this.state.qty}</Text>
+				<TouchableHighlight 
+					underlayColor={colors.tealPrimary}
+					style={{marginTop: 10, marginBottom: 25, width: "75%", alignSelf: 'center'}}
+				>
+					<Button
+						underlayColor={colors.tealSecondary}
+						style={{backgroundColor: colors.tealPrimary}}
+						title="Add to Cart"
 						onPress={this.addToCart.bind(this,item)}
 					/>
-					{/* <DialogButton
-						align="center"
-						text="OK"
-						onPress={() => {
-							fetch(
-								`http://${config.dbApi}:${config.apiPort}/${this.state.type === 'INVENTORY' ? 'inventoryquantity' : 'noninventoryquantity'}`,
-								{
-									method: 'POST',
-									body: JSON.stringify({
-										member_id: this.state.member_id,
-										itemno: item.itemno,
-										qty: this.state.qty,
-										notes: this.state.notes
-									}),
-									headers: {
-										'Content-Type': 'application/json'
-									}
-								}
-							).then((resp) => {
-								if (resp.status === 200) {
-									DialogManager.dismissAll(() => {
-										Alert.alert(
-											`Successfully ordered ${this.state.qty} of ${item.itemno}`
-										);
-									});
-								}
-							});
-						}}
-					/> */}
-					<DialogButton
-						align="center"
-						text="CANCEL"
-						onPress={() => {
-							DialogManager.dismissAll();
-
-							Cart.empty();
-							this.setCartItems(0);
-							this.setCartQty(0);
-						}}
+				</TouchableHighlight>
+				<TouchableHighlight underlayColor={colors.tealPrimary} style={{width: "75%", alignSelf: 'center'}}>
+					<Button
+						underlayColor={colors.tealSecondary}
+						style={{backgroundColor: colors.tealPrimary}}
+						title="Cancel"
+						onPress={() => { RootNavigation.goBack(); }}
 					/>
-				</View>
+				</TouchableHighlight>
 			</View>
 		);
 	}

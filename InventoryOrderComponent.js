@@ -2,14 +2,11 @@
 /* global fetch:false */
 
 import React, { Component } from 'react';
-import { Button, Alert, TouchableHighlight } from 'react-native';
+import { Button, Alert, TouchableHighlight, Modal } from 'react-native';
 import QRCodeScanner from 'react-native-qrcode-scanner';
-import DialogManager from 'react-native-dialog-component/dist/DialogManager';
-import DialogContent from 'react-native-dialog-component/dist/components/DialogContent';
 import QtySlider from './QtySlider';
 import { Picker } from '@react-native-community/picker';
 //import RNPickerSelect from 'react-native-picker-select';
-import { ScaleAnimation } from 'react-native-dialog-component';
 import fetch from 'node-fetch';
 import config from './DatabaseServer/config.json';
 
@@ -20,11 +17,13 @@ export default class InventoryOrderComponent extends Component {
 		this.state = {
 			selected_checkout_item: '',
 			parts: [],
+			qtySliderVisible: false
 		};
 
 		this.showCartIcon = props.showCartIconFunction;
 		this.setCartItems = props.setCartItemsFunction;
 		this.setCartQty = props.setCartQtyFunction;
+		this.showQtySliderFunction = props.showQtySliderFunction;
 	}
 
 	componentDidMount() {
@@ -61,13 +60,14 @@ export default class InventoryOrderComponent extends Component {
 						underlayColor={colors.tealSecondary}
 						title="QR Checkout"
 						onPress={() => {
-							var inst = this;
+							const inst = this;
 							const camera = (
 								<QRCodeScanner
 									permissionDialogTitle={'Need Camera Permission'}
 									permissionDialogMessage={
 										'Please allow us permission to use the camera to continue'
 									}
+									showMarker={true}
 									onRead={(ev) => {
 										if (
 											inst.state.parts
@@ -82,25 +82,12 @@ export default class InventoryOrderComponent extends Component {
 												Alert.alert('Error!', 'Selected Item is Out of Stock');
 											} else {
 												inst.props.hideCameraFunction();
-												DialogManager.show({
-													title: 'Quantity of ' + item.itemno,
-													titleAlign: 'center',
-													animationDuration: 200,
-													ScaleAnimation: new ScaleAnimation(),
-													children: (
-														<DialogContent>
-															<QtySlider
-																showCartIconFunction={inst.showCartIcon}
-																setCartItemsFunction={inst.setCartItems}
-																setCartQtyFunction={inst.setCartQty}
-																type="INVENTORY"
-																member={inst.props.member}
-																item={item}
-															/>
-														</DialogContent>
-													),
-												});
+												inst.showQtySliderFunction(item);
 											}
+										}
+										else
+										{
+											Alert.alert('Error!', 'This QR code does not match an item in the database.');
 										}
 									}}
 								/>
@@ -108,11 +95,11 @@ export default class InventoryOrderComponent extends Component {
 							
 							setTimeout(() => {
 								inst.props.showCameraFunction(camera);
-								try {
-									DialogManager.dismissAll();
-								} catch (err) {
-									console.log(err);
-								}
+								// try {
+								// 	DialogManager.dismissAll();
+								// } catch (err) {
+								// 	console.log(err);
+								// }
 								//history.push('/');
 							}, 500);
 						}}

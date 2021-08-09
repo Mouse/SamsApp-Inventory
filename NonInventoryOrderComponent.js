@@ -4,12 +4,9 @@
 import React, { Component } from 'react';
 import { Button, Alert, TouchableHighlight } from 'react-native';
 import QRCodeScanner from 'react-native-qrcode-scanner';
-import DialogManager from 'react-native-dialog-component/dist/DialogManager';
-import DialogContent from 'react-native-dialog-component/dist/components/DialogContent';
 import QtySlider from './QtySlider';
 import { Picker } from '@react-native-community/picker';
 //import RNPickerSelect from 'react-native-picker-select';
-import { ScaleAnimation } from 'react-native-dialog-component';
 import fetch from 'node-fetch';
 import config from './DatabaseServer/config.json';
 

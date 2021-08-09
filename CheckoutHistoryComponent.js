@@ -16,7 +16,7 @@ export default class CheckoutHistoryComponent extends Component {
 
 	componentDidMount() {
 		console.log('mounted order history');
-		fetch(`http://${config.dbApi}:${config.apiPort}/checkoutreport`)
+		fetch(`http://${config.dbApi}:${config.apiPort}/checkoutreport?all`)
 			.then(response => response.json())
 			.then(data => {
 				console.log(data.checkouts);

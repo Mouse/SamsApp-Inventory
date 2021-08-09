@@ -57,9 +57,11 @@ export default class Cart {
 		if (add === undefined) {
 			console.log('Hard to change something that isn\'t there');
 			return false;
-		} else {
+		} else if (aqty !== 0) {
 			add.cart_qty = aqty;
 			Alert.alert('Cart message',`Set ${add.name} in cart to quantity: [${add.cart_qty}]`);
+		} else {
+			this._inst = this._inst.filter((v) => v.itemno !== add.itemno);
 		}
 	}
 

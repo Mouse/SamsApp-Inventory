@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import { Text, View, Button, ScrollView, TouchableHighlight, Alert, TextInput } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import Cart from './Cart';
 import * as RootNavigation from './ThatsTheWayINavigate'
 const config = require('./DatabaseServer/config.json');
@@ -17,11 +18,11 @@ export default class CartComponent extends Component {
 	}
 
 	componentDidMount() {
-		this.setState({ items: Cart.getCartItems() })
+		this.setState({ items: Cart.getCartItems() });
 	}
 
 	componentWillUnmount() {
-		Cart.setCartItems(this.state.items)
+		Cart.setCartItems(this.state.items);
 	}
 
 	completeOrder() {
@@ -70,6 +71,15 @@ export default class CartComponent extends Component {
 		});
 	}
 
+	onXPressed(v) {
+		//remove from cart
+		Cart.removeFromCart(v);
+		const citems = Cart.getCartItems();
+		this.setState({ items: citems });
+		this.props.setCartDistinctItemsQty(citems.length);
+		this.props.setCartTotalItemsQty(citems.reduce((a,c) => a += c.cart_qty, 0));
+	}
+
 	clearCart() {
 		this.setState({ items: [] });
 		Cart.emptyCart();
@@ -97,10 +107,13 @@ export default class CartComponent extends Component {
 									</View>
 									<View style={{ height: 40, flex: 0.6, alignSelf: 'stretch'}}>
 										<TextInput keyboardType='numeric' selectTextOnFocus onChangeText={(t) => this.onCartQtyChangedToNum(v,t)} style={{width: '75%'}} value={v.cart_qty.toString()} />
-									</View>									
-									<View style={{ justifyContent: 'center', height: 40, flex: 0.4, alignSelf: 'stretch'}}>
-										<Text style={{fontWeight: "700"}}>X</Text>
 									</View>
+									<TouchableOpacity
+										style={{backgroundColor: 'transparent', justifyContent: 'center', height: 40, flex: 0.4, alignSelf: 'stretch', paddingRight: 20 }} 
+										onPress={this.onXPressed.bind(this,v)}
+									>
+										<Text style={{fontWeight: "700", color: 'red'}}>X</Text>
+									</TouchableOpacity>
 
 								</View>
 							</>

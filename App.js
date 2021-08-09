@@ -18,13 +18,13 @@ import {
 	Text,
 	FlatList,
 	TouchableHighlight,
+	Modal
 } from 'react-native';
 
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { useNavigation } from '@react-navigation/native';
 import { navigationRef } from './ThatsTheWayINavigate';
-
 import * as RootNavigation from './ThatsTheWayINavigate';
 
 //import { Router, Scene, Stack, Actions } from 'react-native-router-flux';
@@ -39,6 +39,7 @@ import NonInventoryOrderComponent from './NonInventoryOrderComponent';
 import Cart from './Cart';
 import CartComponent from './CartComponent';
 import LogComponent from './LogComponent';
+import QtySlider from './QtySlider';
 
 const config = require('./DatabaseServer/config.json');
 //import colors from './includes';
@@ -77,6 +78,8 @@ export default class App extends Component {
 			cart_icon_showing: false,
 			cart_items: 0,
 			cart_qty: 0,
+			qtySliderVisible: false,
+			modalItem: null
 		};
 
 		this.statusUpdate.bind(this);
@@ -94,6 +97,14 @@ export default class App extends Component {
 
 	setPage(p) {
 		RootNavigation.navigate(p);
+	}
+
+	hideQtySlider = () => {
+		this.setState({ qtySliderVisible: false, modalItem: null });
+	}
+
+	showQtySlider = (item) => {
+		this.setState({ qtySliderVisible: true, modalItem: item });
 	}
 
 	showCartIcon = () => {
@@ -151,43 +162,6 @@ export default class App extends Component {
 			});
 	};
 
-	// checkConnectionXMLRequest = async () => {
-	// 	const xhr = new XMLHttpRequest();
-	// 	const app_obj = this;
-
-	// 	xhr.withCredentials = true;
-	// 	xhr.timeout = 5000;
-
-	// 	return new Promise((resolve, reject) => {
-	// 		xhr.onload = (ev) => {
-	// 			if (xhr.readyState === 4 && xhr.status === 200) {
-	// 				app_obj.statusUpdate('Connected successfully - XMLHttpRequest');
-	// 				resolve(xhr);
-	// 			} else {
-	// 				app_obj.statusUpdate(
-	// 					`Connection failed: ${xhr.status} - ${xhr.response}`
-	// 				);
-	// 				reject(xhr);
-	// 			}
-	// 		};
-
-	// 		xhr.onerror = (pev) => {
-	// 			app_obj.statusUpdate('Connection crit failed: - XMLHttpRequest');
-	// 			reject(xhr);
-	// 		};
-
-	// 		xhr.open(
-	// 			'GET',
-	// 			`http://${config.dbApi}:${config.apiPort}/members`,
-	// 			true
-	// 		);
-	// 		this.statusUpdate(
-	// 			`Attempting to connect to http://${config.dbApi}:${config.apiPort} - XMLHttpRequest`
-	// 		);
-	// 		xhr.send();
-	// 	});
-	// };
-
 	componentDidMount() {
 		this.checkConnectionFetch().then(() => {
 			fetch(`http://${config.dbApi}:${config.apiPort}/members`)
@@ -201,12 +175,12 @@ export default class App extends Component {
 	}
 
 	componentDidUpdate(prevProps, prevState) {
-		// if (this.state.status_lines.length > 3) {
-		// 	this.state.status_lines.shift();
-		// }
-		// if (this.state.users.length !== prevState.users.length) {
-		// 	return true;
-		// }
+		if (this.state.cart_items !== prevState.cart_items) {
+			if (this.state.cart_items == 0) {
+				this.setState({ cart_icon_showing: false });
+				RootNavigation.goBack();
+			}
+		}
 	}
 
 	statusUpdate(text) {
@@ -286,7 +260,7 @@ export default class App extends Component {
 												numColumns={2}
 											/>
 										</View>
-										<View style={{alignItems: 'center'}}><Text>Version: 1.0.0</Text></View>
+										<View style={{alignItems: 'center'}}><Text>Version: 0.99.99</Text></View>
 									</>
 								}
 							</Stack.Screen>
@@ -334,6 +308,7 @@ export default class App extends Component {
 										showCartIconFunction={this.showCartIcon.bind(this)}
 										setCartItemsFunction={this.setCartDistinctItemsQty.bind(this)}
 										setCartQtyFunction={this.setCartTotalItemsQty.bind(this)}
+										showQtySliderFunction={this.showQtySlider.bind(this)}
 
 									/>
 								}
@@ -392,6 +367,24 @@ export default class App extends Component {
 						<Text style={{color: 'black'}}>{this.state.cart_items} - ({this.state.cart_qty})</Text>
 					</TouchableHighlight>
 				}
+
+					<Modal 
+						animationType="slide"
+						transparent={false}
+						visible={this.state.qtySliderVisible}
+						onRequestClose={() => {this.setState({ qtySliderVisible: false })}}
+					>
+						<QtySlider
+							showItemName={true}
+							showCartIconFunction={this.showCartIcon}
+							setCartDistinctItemsQty={this.setCartDistinctItemsQty}
+							setCartTotalItemsQty={this.setCartTotalItemsQty}
+							type="INVENTORY"
+							member={this.props.member}
+							item={this.state.modalItem}
+							closeModalFunction={this.hideQtySlider}
+						/>
+					</Modal>
 			</>
 		);
 
