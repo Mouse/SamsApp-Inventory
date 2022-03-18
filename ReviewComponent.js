@@ -16,7 +16,7 @@ export default class ReviewComponent extends Component {
 						title="Download Inventory Quantities (.csv)"
 						onPress={() => {
 							data = [];
-							check(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE).then((r) => {
+							request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE).then((r) => {
 								switch (r) {
 								case RESULTS.GRANTED:
 									request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE).then(
@@ -57,7 +57,7 @@ export default class ReviewComponent extends Component {
 						title="Download Non-Inventory Quantities (.csv)"
 						onPress={() => {
 							data = [];
-							check(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE).then((r) => {
+							request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE).then((r) => {
 								switch (r) {
 								case RESULTS.GRANTED:
 									request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE).then(
@@ -98,7 +98,7 @@ export default class ReviewComponent extends Component {
 						title="Download Checkout Report (.csv)"
 						onPress={() => {
 							data = [];
-							check(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE).then((r) => {
+							request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE).then((r) => {
 								switch (r) {
 								case RESULTS.GRANTED:
 									request(PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE).then(

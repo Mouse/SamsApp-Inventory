@@ -87,7 +87,7 @@ export default class InventoryOrderComponent extends Component {
 										}
 										else
 										{
-											Alert.alert('Error!', 'This QR code does not match an item in the database.');
+											Alert.alert('Error!', `QR Code with itemno ${ev.data} does not match an item in the database.`);
 										}
 									}}
 								/>
@@ -137,8 +137,8 @@ export default class InventoryOrderComponent extends Component {
 					.includes(this.state.selected_checkout_item) && (
 					<QtySlider
 						showCartIconFunction={this.showCartIcon}
-						setCartItemsFunction={this.setCartItems}
-						setCartQtyFunction={this.setCartQty}
+						setCartDistinctItemsQty={this.setCartItems}
+						setCartTotalItemsQty={this.setCartQty}
 						type="INVENTORY"
 						member={this.props.member}
 						item={this.state.parts.find(

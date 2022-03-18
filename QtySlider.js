@@ -18,8 +18,8 @@ export default class QtySlider extends Component {
 		console.log(props);
 
 		this.showCart = props.showCartIconFunction;
-		this.setCartItems = props.setCartItemsFunction;
-		this.setCartQty = props.setCartQtyFunction;
+		this.setCartItems = props.setCartDistinctItemsQty;
+		this.setCartQty = props.setCartTotalItemsQty;
 		this.closeModal = props.closeModalFunction
 		this.addToCart.bind(this);
 	}

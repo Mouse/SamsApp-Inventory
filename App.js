@@ -18,7 +18,8 @@ import {
 	Text,
 	FlatList,
 	TouchableHighlight,
-	Modal
+	Modal,
+	Alert
 } from 'react-native';
 
 import { NavigationContainer } from '@react-navigation/native';
@@ -46,7 +47,7 @@ const config = require('./DatabaseServer/config.json');
 
 import fetch from 'node-fetch';
 import AbortController from 'abort-controller';
-import { ScrollView } from 'react-native-gesture-handler';
+
 
 if (!globalThis.fetch) {
 	globalThis.fetch = fetch;
@@ -151,10 +152,12 @@ export default class App extends Component {
 					this.statusUpdate('Timed out - fetch');
 					const old = config.dbApi;
 					this.statusUpdate(`Old config.dbApi: ${old}`);
-					config.dbApi = config.dbApiLocal;
+					config.dbApi = config.dbApiRemote;
 					this.statusUpdate(`Changed config.dbAbi from ${old} to ${config.dbApi}`);
+					Alert.alert(`Changed config.dbAbi from ${old} to ${config.dbApi}`);
 				} else {
 					this.statusUpdate(`Connection error: ${err} - fetch`);
+					Alert.alert(`Connection error: ${err} - fetch`)
 				}
 			})
 			.finally(() => {
@@ -169,6 +172,9 @@ export default class App extends Component {
 			.then((data) => {
 				this.setState({ users: data });
 				this.statusUpdate(`Connecting with ${config.dbApi}:${config.apiPort}`);
+			})
+			.catch((err) => {
+				Alert.alert(`http://${config.dbApi}:${config.apiPort}/members could not be reached\nError: ${err}`);
 			});
 		});
 		//await this.checkConnectionXMLRequest(); //reasons6		
@@ -260,7 +266,7 @@ export default class App extends Component {
 												numColumns={2}
 											/>
 										</View>
-										<View style={{alignItems: 'center'}}><Text>Version: 0.99.99</Text></View>
+										<View style={{alignItems: 'center'}}><Text>Version: {config.version}</Text></View>
 									</>
 								}
 							</Stack.Screen>
@@ -330,6 +336,7 @@ export default class App extends Component {
 							<Stack.Screen name="Cart" options={{ title: "Cart" }}>
 								{ props =>
 									<CartComponent
+										member={this.state.user}
 										hideCart={this.hideCartIcon.bind(this)}
 										showCart={this.showCartIcon.bind(this)}
 										getCartDistinctItemsQty={this.getCartDistinctItemsQty.bind(this)}
@@ -380,7 +387,7 @@ export default class App extends Component {
 							setCartDistinctItemsQty={this.setCartDistinctItemsQty}
 							setCartTotalItemsQty={this.setCartTotalItemsQty}
 							type="INVENTORY"
-							member={this.props.member}
+							member={this.state.user}
 							item={this.state.modalItem}
 							closeModalFunction={this.hideQtySlider}
 						/>

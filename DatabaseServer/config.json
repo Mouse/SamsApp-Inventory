@@ -1,9 +1,10 @@
 {
-    "dbApi": "inventory-app.fpsys.com",
-    "dbApiLocal": "192.168.1.2",
+    "dbApi": "192.168.1.2",
+    "dbApiRemote": "inventory-app.fpsys.com",
     "dbServer": "localhost",
     "dbSchema": "FPS_Inventory",
     "dbUser": "node_admin",
     "dbPass": "Abc1@3!!",
+    "version": "0.99.99",
     "apiPort": 3040
 }

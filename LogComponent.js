@@ -12,11 +12,14 @@ export default class LogComponent extends Component {
     
     render() {
         return (
-            <View>
-                {this.state.log.map((v) => {
+            <>
+            {this.props.log.map((v) => {
+                <View>
                     <Text>{v}</Text>
+                </View>
                 })}
-            </View>
+            </>
+            
         )
     }
 }

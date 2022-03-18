@@ -27,27 +27,29 @@ export default class CartComponent extends Component {
 
 	completeOrder() {
 		const aitems = [...this.state.items];
-		for (let i of aitems)
+		for (const i of aitems) {
 			i.notes = this.state.notes;
+			i.member_id = this.props.member;
+		}
 
-		data = JSON.stringify({items: aitems})
+		data = JSON.stringify({ items: aitems })
 
 		fetch(`http://${config.dbApi}:${config.apiPort}/order`,
 		{ 
 			method: 'POST',
 			body: data,
 			headers: {
-				'Content-Type': 'application/json',
-				'Content-Length': data.length.toString()
-			},
-			cache: 'default',
-			redirect: 'follow'
+				'Content-Type': 'application/json'
+			}
 		})
-			.then((response) => response.text())
-			.then((data) => {
-				Alert.alert(`${data} item orders successful`);
-				this.clearCart();
-			});
+		.then((response) => response.text())
+		.then((data) => {
+			Alert.alert(`${data} item orders successful`);
+			this.clearCart();
+		})
+		.catch((err) => {
+			console.log(err);
+		});
 	}
 
 	onCartQtyChangedToNum(v,t) {
